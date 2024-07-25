@@ -13,5 +13,10 @@ func main() {
 		log.Fatalln("Failed to query for IP:", err)
 	}
 	fmt.Println("IP:", ip)
-	ddns.DNSQuery("example.com")
+
+	dnsResponse, err := ddns.DNSQuery("example.com")
+	if err != nil {
+		log.Fatalln("Failed to do DNS query:", err)
+	}
+	fmt.Println("DNS response:", dnsResponse)
 }
