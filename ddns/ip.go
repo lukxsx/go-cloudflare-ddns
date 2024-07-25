@@ -1,21 +1,27 @@
 package ddns
 
 import (
+	"errors"
 	"io"
-	"log"
+	"net"
 	"net/http"
 )
 
-func GetMyIPAddress() string {
+func GetMyIPAddress() (net.IP, error) {
 	res, err := http.Get("https://api.ipify.org")
 	if err != nil {
-		log.Fatalln(err)
+		return nil, err
 	}
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		log.Fatalln(err)
+		return nil, err
 	}
 
-	return string(body)
+	ip := net.ParseIP(string(body))
+	if ip == nil {
+		return nil, errors.New("failed to parse IP address")
+	}
+
+	return ip, nil
 }
