@@ -2,6 +2,7 @@ package ddns
 
 import (
 	"errors"
+	"log/slog"
 	"net"
 	"os"
 	"strings"
@@ -17,6 +18,7 @@ type Client struct {
 	Domains    []string
 
 	currentIP net.IP
+	Logger    *slog.Logger
 }
 
 // Read configuration values from environment variables
