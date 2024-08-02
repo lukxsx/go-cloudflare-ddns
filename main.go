@@ -29,8 +29,7 @@ func main() {
 	}
 
 	// Create the client
-	client, err := ddns.CreateClient(clientConfig, logger)
-	client.UpdateIP()
+	_, err = ddns.CreateClient(clientConfig, logger)
 
 	if err != nil {
 		logger.Error(err.Error())
@@ -42,7 +41,7 @@ func main() {
 // Setup logger
 func setupLogger() *slog.Logger {
 	var logLevel = new(slog.LevelVar)
-	h := slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: logLevel})
+	h := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: logLevel})
 	slog.SetDefault(slog.New(h))
 	if os.Getenv("DEBUG") == "true" {
 		logLevel.Set(slog.LevelDebug)
