@@ -8,6 +8,7 @@ import (
 	"net/http"
 )
 
+// DNSResponse represents the JSON response from the CloudFlare DNS over HTTPS API
 type DNSResponse struct {
 	Answer []struct {
 		Name string `json:"name"`
@@ -17,6 +18,7 @@ type DNSResponse struct {
 	} `json:"Answer"`
 }
 
+// Query the DNS A record for a domain
 func DNSQuery(domain string) (net.IP, error) {
 	req, err := http.NewRequest("GET", "https://1.1.1.1/dns-query?name="+domain+"&type=A", nil)
 	req.Header.Set("accept", "application/dns-json")

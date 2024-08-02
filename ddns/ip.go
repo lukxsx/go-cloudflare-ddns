@@ -7,6 +7,7 @@ import (
 	"net/http"
 )
 
+// Fetches the public IP address using the ipify API
 func GetMyIPAddress() (net.IP, error) {
 	res, err := http.Get("https://api.ipify.org")
 	if err != nil {
