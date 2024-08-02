@@ -1,50 +1,32 @@
 package ddns
 
 import (
-	"errors"
 	"log/slog"
 	"net"
-	"os"
-	"strings"
-
-	"github.com/joho/godotenv"
 )
+
+// Client config struct
+type ClientConfig struct {
+	CFApiToken string
+	CFZoneID   string
+	Domains    []string
+}
 
 // Client struct
 type Client struct {
 	// Cloudflare API credentials
-	CFApiToken string
-	CFZoneID   string
-	Domains    []string
+	config ClientConfig
 
 	currentIP net.IP
-	Logger    *slog.Logger
+	logger    *slog.Logger
 }
 
-// Read configuration values from environment variables
-func (c *Client) Configure() error {
-	// Check for .env file
-	godotenv.Load()
-
-	// Parse Cloudflare API credentials
-	c.CFApiToken = os.Getenv("CF_API_TOKEN")
-	c.CFZoneID = os.Getenv("CF_ZONE_ID")
-	if c.CFApiToken == "" || c.CFZoneID == "" {
-		return errors.New("missing Cloudflare API credentials")
+func CreateClient(config *ClientConfig, logger *slog.Logger) (*Client, error) {
+	client := &Client{config: *config, logger: logger}
+	err := client.UpdateIP()
+	if err != nil {
+		return nil, err
 	}
 
-	// Parse domains from comma-separated list
-	domains := os.Getenv("DOMAINS")
-	if domains == "" {
-		return errors.New("missing domain list")
-	}
-	split_domains := strings.Split(domains, ",")
-	if len(split_domains) == 0 {
-		return errors.New("missing domain list")
-	}
-	c.Domains = split_domains
-
-	// TODO: validate all values
-
-	return nil
+	return client, nil
 }
