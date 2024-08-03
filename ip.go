@@ -9,7 +9,7 @@ import (
 
 // Fetches the public IP address using the ipify API
 func getIP() (net.IP, error) {
-	logger.Debug("Fetching public IP address")
+	logger.Debug("Fetching current public IP address")
 	res, err := http.Get("https://api.ipify.org")
 	if err != nil {
 		return nil, err

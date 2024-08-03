@@ -29,6 +29,8 @@ func main() {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
+
+	checkAndUpdate("google.com")
 }
 
 // Setup logger

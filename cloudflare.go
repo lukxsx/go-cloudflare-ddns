@@ -18,8 +18,9 @@ type DNSResponse struct {
 	} `json:"Answer"`
 }
 
-// Query the DNS A record for a domain
-func DNSQuery(domain string) (net.IP, error) {
+// Make a DNS query using Cloudflare's DNS over HTTPS API
+func dnsQuery(domain string) (net.IP, error) {
+	logger.Debug("Making DNS A query for: " + domain)
 	req, err := http.NewRequest("GET", "https://1.1.1.1/dns-query?name="+domain+"&type=A", nil)
 	req.Header.Set("accept", "application/dns-json")
 	if err != nil {
@@ -54,6 +55,8 @@ func DNSQuery(domain string) (net.IP, error) {
 	if ip == nil {
 		return nil, errors.New("failed to parse IP")
 	}
+
+	logger.Debug("DNS A query result: " + ip.String())
 
 	return ip, nil
 }
