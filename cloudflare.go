@@ -18,6 +18,24 @@ type DNSResponse struct {
 	} `json:"Answer"`
 }
 
+// Verify API credentials
+func verifyCFToken() error {
+	logger.Debug("Verifying Cloudflare API credentials")
+	req, err := http.NewRequest("GET", "https://api.cloudflare.com/client/v4/user/tokens/verify", nil)
+	req.Header.Set("Authorization", "Bearer "+cfApiToken)
+	if err != nil {
+		return err
+	}
+
+	client := &http.Client{}
+	res, err := client.Do(req)
+	if err != nil || res.StatusCode != 200 {
+		return errors.New("invalid Cloudflare API token")
+	}
+
+	return nil
+}
+
 // Make a DNS query using Cloudflare's DNS over HTTPS API
 func dnsQuery(domain string) (net.IP, error) {
 	logger.Debug("Making DNS A query for: " + domain)

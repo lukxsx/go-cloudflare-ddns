@@ -30,6 +30,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Check if CF token is valid
+	err = verifyCFToken()
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+
 	checkAndUpdate("google.com")
 }
 
