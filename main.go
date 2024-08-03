@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 	"os"
 	"strings"
@@ -36,6 +37,13 @@ func main() {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
+
+	dnsResults, err := listDNSRecords()
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+	fmt.Println(dnsResults)
 
 	checkAndUpdate("google.com")
 }

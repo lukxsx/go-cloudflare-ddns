@@ -15,10 +15,21 @@ type DNSResponse struct {
 	} `json:"Answer"`
 }
 
+type DNSEntry struct {
+	Content string `json:"content"`
+	Name    string `json:"name"`
+	Type    string `json:"type"`
+	Id      string `json:"id"`
+}
+
+type DNSRecordList struct {
+	Result []DNSEntry `json:"result"`
+}
+
 // Verify API credentials
 func verifyCFToken() error {
 	logger.Debug("Verifying Cloudflare API credentials")
-	res, err := httpGETRequest("https://api.cloudflare.com/client/v4/user/tokens/verify", map[string]string{"Authorization": "Bearer " + cfApiToken})
+	res, err := httpGETRequest("https://api.cloudflare.com/client/v4/user/tokens/verify")
 	if err != nil || res.StatusCode != 200 {
 		return errors.New("invalid Cloudflare API token")
 	}
@@ -28,10 +39,31 @@ func verifyCFToken() error {
 	return nil
 }
 
+// List DNS records
+func listDNSRecords() ([]DNSEntry, error) {
+	res, err := httpGETRequest("https://api.cloudflare.com/client/v4/zones/" + cfZoneId + "/dns_records")
+	if err != nil {
+		return nil, err
+	}
+
+	var dnsRecordList DNSRecordList
+
+	err = parseJSON(res, &dnsRecordList)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(dnsRecordList.Result) < 1 {
+		return nil, errors.New("DNS records not found")
+	}
+
+	return dnsRecordList.Result, nil
+}
+
 // Make a DNS query using Cloudflare's DNS over HTTPS API
 func dnsQuery(domain string) (net.IP, error) {
 	logger.Debug("Making DNS A query for: " + domain)
-	res, err := httpGETRequest("https://1.1.1.1/dns-query?name="+domain+"&type=A", map[string]string{"accept": "application/dns-json"})
+	res, err := httpGETRequest("https://1.1.1.1/dns-query?name=" + domain + "&type=A")
 	if err != nil {
 		return nil, err
 	}
