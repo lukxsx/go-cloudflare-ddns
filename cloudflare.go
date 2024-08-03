@@ -1,11 +1,8 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
-	"io"
 	"net"
-	"net/http"
 )
 
 // DNSResponse represents the JSON response from the CloudFlare DNS over HTTPS API
@@ -21,17 +18,12 @@ type DNSResponse struct {
 // Verify API credentials
 func verifyCFToken() error {
 	logger.Debug("Verifying Cloudflare API credentials")
-	req, err := http.NewRequest("GET", "https://api.cloudflare.com/client/v4/user/tokens/verify", nil)
-	req.Header.Set("Authorization", "Bearer "+cfApiToken)
-	if err != nil {
-		return err
-	}
-
-	client := &http.Client{}
-	res, err := client.Do(req)
+	res, err := httpGETRequest("https://api.cloudflare.com/client/v4/user/tokens/verify", map[string]string{"Authorization": "Bearer " + cfApiToken})
 	if err != nil || res.StatusCode != 200 {
 		return errors.New("invalid Cloudflare API token")
 	}
+
+	defer res.Body.Close()
 
 	return nil
 }
@@ -39,26 +31,13 @@ func verifyCFToken() error {
 // Make a DNS query using Cloudflare's DNS over HTTPS API
 func dnsQuery(domain string) (net.IP, error) {
 	logger.Debug("Making DNS A query for: " + domain)
-	req, err := http.NewRequest("GET", "https://1.1.1.1/dns-query?name="+domain+"&type=A", nil)
-	req.Header.Set("accept", "application/dns-json")
-	if err != nil {
-		return nil, err
-	}
-
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	body, err := io.ReadAll(res.Body)
+	res, err := httpGETRequest("https://1.1.1.1/dns-query?name="+domain+"&type=A", map[string]string{"accept": "application/dns-json"})
 	if err != nil {
 		return nil, err
 	}
 
 	var dnsResponse DNSResponse
-
-	err = json.Unmarshal([]byte(body), &dnsResponse)
+	err = parseJSON(res, &dnsResponse)
 	if err != nil {
 		return nil, err
 	}
