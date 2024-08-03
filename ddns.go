@@ -6,7 +6,7 @@ import (
 )
 
 func checkAndUpdate() error {
-	logger.Debug("Checking for updates")
+	logger.Info("Checking for updates")
 	// Get current IP
 	currentIP, err := getIP()
 	if err != nil {

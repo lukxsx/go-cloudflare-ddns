@@ -5,16 +5,22 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"os/signal"
+	"strconv"
 	"strings"
+	"sync"
+	"syscall"
+	"time"
 
 	"github.com/joho/godotenv"
 )
 
 var (
-	logger     *slog.Logger
-	cfApiToken string
-	cfZoneId   string
-	domains    []string
+	logger         *slog.Logger
+	cfApiToken     string
+	cfZoneId       string
+	domains        []string
+	updateInterval int
 )
 
 func main() {
@@ -38,10 +44,33 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Initial update check
 	err = checkAndUpdate()
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to check for updates: %s", err.Error()))
 	}
+
+	// Set up goroutine with timer to check for updates
+	var wg sync.WaitGroup
+	stopCh := make(chan struct{})
+
+	// Start the scheduled function
+	wg.Add(1)
+	go runner(&wg, stopCh)
+
+	// Set up channel to receive interrupt signals
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+
+	// Wait for an interrupt signal
+	<-signalChan
+
+	// Signal the asynchronous function to stop
+	close(stopCh)
+
+	// Wait for all goroutines to finish
+	wg.Wait()
+	logger.Info("Exiting.")
 }
 
 // Setup logger
@@ -76,6 +105,18 @@ func configure() error {
 		return errors.New("missing domain list")
 	}
 
+	intervalStr := os.Getenv("UPDATE_INTERVAL")
+	if intervalStr == "" {
+		updateInterval = 10 // minutes
+	} else {
+		intervalInt, err := strconv.Atoi(intervalStr)
+		if err != nil {
+			return errors.New("invalid update interval value")
+		}
+		updateInterval = intervalInt
+	}
+	logger.Info(fmt.Sprintf("Update interval set to %d minutes", updateInterval))
+
 	// TODO: validate all values
 
 	logger.Debug("CF_API_TOKEN: " + cfApiToken)
@@ -83,4 +124,23 @@ func configure() error {
 	logger.Debug("DOMAINS: " + strings.Join(domains, ", "))
 
 	return nil
+}
+
+// Run the update routine periodically
+func runner(wg *sync.WaitGroup, stopCh <-chan struct{}) {
+	defer wg.Done()
+	ticker := time.NewTicker(time.Duration(updateInterval) * time.Minute)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-stopCh:
+			return
+		case <-ticker.C:
+			err := checkAndUpdate()
+			if err != nil {
+				logger.Error(fmt.Sprintf("Failed to check for updates: %s", err.Error()))
+			}
+		}
+	}
 }
