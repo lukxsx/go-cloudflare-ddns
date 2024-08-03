@@ -1,4 +1,4 @@
-package ddns
+package main
 
 import (
 	"errors"
@@ -8,8 +8,8 @@ import (
 )
 
 // Fetches the public IP address using the ipify API
-func (c *Client) getMyIPAddress() (net.IP, error) {
-	c.logger.Debug("Fetching public IP address")
+func getIP() (net.IP, error) {
+	logger.Debug("Fetching public IP address")
 	res, err := http.Get("https://api.ipify.org")
 	if err != nil {
 		return nil, err
@@ -25,17 +25,7 @@ func (c *Client) getMyIPAddress() (net.IP, error) {
 		return nil, errors.New("failed to parse IP address")
 	}
 
-	c.logger.Debug("Fetched IP: " + ip.String())
+	logger.Debug("Fetched IP: " + ip.String())
 
 	return ip, nil
-}
-
-func (c *Client) UpdateIP() error {
-	ip, err := c.getMyIPAddress()
-	if err != nil {
-		return err
-	}
-
-	c.currentIP = ip
-	return nil
 }

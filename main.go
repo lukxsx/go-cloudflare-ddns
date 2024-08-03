@@ -7,11 +7,13 @@ import (
 	"strings"
 
 	"github.com/joho/godotenv"
-	"github.com/lukxsx/go-cloudflare-ddns/ddns"
 )
 
 var (
-	logger *slog.Logger
+	logger     *slog.Logger
+	cfApiToken string
+	cfZoneId   string
+	domains    []string
 )
 
 func main() {
@@ -22,20 +24,11 @@ func main() {
 	logger.Info("Starting Cloudflare DDNS client")
 
 	// Read configuration values from environment variables
-	clientConfig, err := Configure()
+	err := configure()
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
-
-	// Create the client
-	_, err = ddns.CreateClient(clientConfig, logger)
-
-	if err != nil {
-		logger.Error(err.Error())
-		os.Exit(1)
-	}
-
 }
 
 // Setup logger
@@ -50,33 +43,31 @@ func setupLogger() *slog.Logger {
 }
 
 // Read configuration values from environment variables
-func Configure() (*ddns.ClientConfig, error) {
+func configure() error {
 	logger.Debug("Reading configuration from environment variables")
-	c := &ddns.ClientConfig{}
 
 	// Parse Cloudflare API credentials
-	c.CFApiToken = os.Getenv("CF_API_TOKEN")
-	c.CFZoneID = os.Getenv("CF_ZONE_ID")
-	if c.CFApiToken == "" || c.CFZoneID == "" {
-		return nil, errors.New("missing Cloudflare API credentials")
+	cfApiToken = os.Getenv("CF_API_TOKEN")
+	cfZoneId = os.Getenv("CF_ZONE_ID")
+	if cfApiToken == "" || cfZoneId == "" {
+		return errors.New("missing Cloudflare API credentials")
 	}
 
 	// Parse domains from comma-separated list
-	domains := os.Getenv("DOMAINS")
-	if domains == "" {
-		return nil, errors.New("missing domain list")
+	domainStr := os.Getenv("DOMAINS")
+	if domainStr == "" {
+		return errors.New("missing domain list")
 	}
-	split_domains := strings.Split(domains, ",")
-	if len(split_domains) == 0 {
-		return nil, errors.New("missing domain list")
+	domains = strings.Split(domainStr, ",")
+	if len(domains) == 0 {
+		return errors.New("missing domain list")
 	}
-	c.Domains = split_domains
 
 	// TODO: validate all values
 
-	logger.Debug("CF_API_TOKEN: " + c.CFApiToken)
-	logger.Debug("CF_ZONE_ID: " + c.CFZoneID)
-	logger.Debug("DOMAINS: " + strings.Join(c.Domains, ", "))
+	logger.Debug("CF_API_TOKEN: " + cfApiToken)
+	logger.Debug("CF_ZONE_ID: " + cfZoneId)
+	logger.Debug("DOMAINS: " + strings.Join(domains, ", "))
 
-	return c, nil
+	return nil
 }
