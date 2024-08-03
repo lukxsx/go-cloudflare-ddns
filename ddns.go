@@ -5,12 +5,8 @@ import (
 	"net"
 )
 
-// Steps:
-// Query current IP of the commputer
-// Make DNS query on the domain
-// If different, update
-
 func checkAndUpdate() error {
+	logger.Debug("Checking for updates")
 	// Get current IP
 	currentIP, err := getIP()
 	if err != nil {
@@ -18,7 +14,7 @@ func checkAndUpdate() error {
 	}
 
 	// Get DNS records
-	dnsRecords, err := getDNSRecords()
+	dnsRecords, err := getRecords()
 	if err != nil {
 		return err
 	}
@@ -35,8 +31,10 @@ func checkAndUpdate() error {
 		recordIP := net.ParseIP(record.Content)
 		if !recordIP.Equal(currentIP) {
 			logger.Debug(fmt.Sprintf("IPs don't match: %s: %s, local: %s", record.Name, record.Content, currentIP.String()))
-			logger.Info(fmt.Sprintf("Updating DNS record for %s", record.Name))
-			// updateRecord(record, currentIp)
+			err = updateRecord(record, currentIP)
+			if err != nil {
+				return err
+			}
 		} else {
 			logger.Debug(fmt.Sprintf("IPs match: %s: %s, local: %s", record.Name, record.Content, currentIP.String()))
 		}

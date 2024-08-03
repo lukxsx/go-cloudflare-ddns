@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -38,6 +39,26 @@ func httpGETRequest(url string) (*http.Response, error) {
 	}
 
 	logger.Debug(fmt.Sprintf("%d GET %s", res.StatusCode, url))
+
+	return res, nil
+}
+
+// HTTP PATCH request with JSON input
+func httpPATCHRequest(url string, jsonData []byte) (*http.Response, error) {
+	req, err := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+cfApiToken)
+
+	res, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	logger.Debug(fmt.Sprintf("%d PATCH %s", res.StatusCode, url))
 
 	return res, nil
 }

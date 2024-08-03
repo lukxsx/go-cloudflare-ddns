@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 	"os"
 	"strings"
@@ -37,7 +38,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	checkAndUpdate()
+	err = checkAndUpdate()
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to check for updates: %s", err.Error()))
+	}
 }
 
 // Setup logger
