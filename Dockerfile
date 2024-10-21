@@ -16,6 +16,7 @@ FROM scratch
 COPY --from=builder /app/go-cloudflare-ddns /app/go-cloudflare-ddns
 COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /etc/group /etc/group
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 USER appuser
 
